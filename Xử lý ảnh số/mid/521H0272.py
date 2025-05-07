@@ -1,0 +1,160 @@
+import cv2 as cv
+import numpy as np
+
+# Read the input image
+img1 = cv.imread('input1.jpg')
+img2 = cv.imread('input2.png')
+
+"""
+1.a
+Extract each star in the input image automatically by using color filtering in HSV color space
+"""
+
+# Convert BGR to HSV
+hsv = cv.cvtColor(img1, cv.COLOR_BGR2HSV)
+
+# Define range of color in HSV
+lower_yellow = np.array([27, 50, 70])
+upper_yellow = np.array([30, 255, 255]) 
+
+lower_orange = np.array([10, 100, 20])
+upper_orange = np.array([12, 255, 255])
+
+lower_pink = np.array([159, 50, 70])
+upper_pink = np.array([180, 255, 255])
+
+lower_blue = np.array([90, 50, 70])
+upper_blue = np.array([128, 255, 255])
+
+lower_green = np.array([36, 50, 70])
+upper_green = np.array([89, 255, 255])
+
+lower_purple = np.array([129, 50, 70])
+upper_purple = np.array([158, 255, 255])
+
+# Threshold the HSV image to get only '?' colors
+mask_yellow = cv.inRange(hsv, lower_yellow, upper_yellow)
+mask_orange = cv.inRange(hsv, lower_orange, upper_orange)
+mask_pink = cv.inRange(hsv, lower_pink, upper_pink)
+mask_blue = cv.inRange(hsv, lower_blue, upper_blue)
+mask_green = cv.inRange(hsv, lower_green, upper_green)
+mask_purple = cv.inRange(hsv, lower_purple, upper_purple)
+
+# Bitwise-AND mask and original image
+res_yellow = cv.bitwise_and(img1, img1, mask=mask_yellow)
+res_orange = cv.bitwise_and(img1, img1, mask=mask_orange)
+res_pink = cv.bitwise_and(img1, img1, mask=mask_pink)
+res_blue = cv.bitwise_and(img1, img1, mask=mask_blue)
+res_green = cv.bitwise_and(img1, img1, mask=mask_green)
+res_purple = cv.bitwise_and(img1, img1, mask=mask_purple)
+
+# Write the results
+cv.imwrite('521h0435_img_01_01.jpg', res_yellow)
+cv.imwrite('521h0435_img_01_02.jpg', res_orange)
+cv.imwrite('521h0435_img_01_03.jpg', res_pink)
+cv.imwrite('521h0435_img_01_04.jpg', res_blue)
+cv.imwrite('521h0435_img_01_05.jpg', res_green)
+cv.imwrite('521h0435_img_01_06.jpg', res_purple)
+
+"""
+1.b
+- Convert the input image into Grayscale color space
+- Repaint White borders of all stars to Black color by using thresholding techniques
+"""
+
+# Convert RGB into Gray Scale
+gray = cv.cvtColor(img1, cv.COLOR_BGR2GRAY)
+
+""" Simple thresholding method """
+# If a pixel value > 218: set the pixel to be *white*, otherwise it is *black*
+_, thresh_01 = cv.threshold(gray, 218, 255, cv.THRESH_BINARY) 
+
+# Remove noise using morphological operations
+kernel = np.ones((5, 5), np.uint8)
+clean_img = cv.morphologyEx(thresh_01, cv.MORPH_OPEN, kernel)
+
+# Black borders of all stars
+result_1b_img_01 = np.where(clean_img == 255, 0, gray)
+
+cv.imwrite('521h0435_img_01_07.jpg', result_1b_img_01)
+
+""""""
+_ , thresh_02 = cv.threshold(gray, 220, 255, cv.THRESH_TOZERO)
+result_1b_img_02 = np.where(thresh_02 >= 200, 0, gray)
+cv.imwrite('521h0435_img_01_08.jpg', result_1b_img_02)
+
+""""""
+_ , thresh_03 = cv.threshold(gray, 220, 255, cv.THRESH_BINARY_INV)
+result_1b_img_03 = np.where(thresh_03 == 0, 0, gray)
+cv.imwrite('521h0435_img_01_09.jpg', result_1b_img_03)
+
+""""""
+_ , thresh_04 = cv.threshold(gray, 220, 255, cv.THRESH_TOZERO_INV)
+result_1b_img_04 = np.where(thresh_04 == 0, 0, gray)
+cv.imwrite('521h0435_img_01_10.jpg', result_1b_img_04)
+
+""""""
+_ , thresh_05 = cv.threshold(gray, 220, 255, cv.THRESH_TRUNC)
+result_1b_img_05 = np.where(thresh_05 >= 220, 0, gray)
+cv.imwrite('521h0435_img_01_11.jpg', result_1b_img_05)
+
+"""
+1.c 
+- Convert the input image into Grayscale color space
+- Repaint the background to White color 
+- Repaint all stars to Black color by using thresholding techniques
+"""
+
+img = img1.copy()
+_, thresh_06 = cv.threshold(gray, 200, 255, cv.THRESH_BINARY)
+# Find contours to identify stars
+contours, _ = cv.findContours(thresh_06, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+# Repaint the background to white
+img[:] = [255, 255, 255]
+# Repaint stars to black
+result_1c_img_01 = cv.drawContours(img, contours, -1, (0, 0, 0), thickness=cv.FILLED)
+
+cv.imwrite('521h0435_img_01_12.jpg', result_1c_img_01)
+
+""""""
+
+result_1c_img_02 = np.where(gray == 184, 0, gray)
+_, thresh_07 = cv.threshold(result_1c_img_02, 0, 255, cv.THRESH_BINARY_INV)
+cv.imwrite('521h0435_img_01_13.jpg', thresh_07)
+
+""""""
+result_1c_img_03 = np.where(gray == 184, 0, gray)
+_ , thresh_08 = cv.threshold(result_1c_img_03, 220, 255, cv.THRESH_TOZERO)
+_ , thresh_09 = cv.threshold(result_1c_img_03, 0, 255, cv.THRESH_BINARY_INV)
+result_1c_img_03 = cv.bitwise_not(thresh_08, thresh_09, mask=thresh_08)
+cv.imwrite('521h0435_img_01_14.jpg', result_1c_img_03)
+
+"""
+2. 
+- Draw rectangles surrounding each digit in the input image automatically
+- Save the output image into a file.
+"""
+# Đọc ảnh
+img = cv2.imread("input2.png")
+
+# Chuyển đổi ảnh sang thang độ xám
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+# Áp dụng bộ lọc ngưỡng
+_, thresh_10 = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV  + cv2.THRESH_OTSU)
+
+# Loại bỏ các chấm đen
+kernel = np.ones((4, 4), np.uint8)
+morph = cv2.morphologyEx(thresh_10, cv2.MORPH_OPEN, kernel = kernel, iterations=1)
+
+# Tìm các đường viền
+contours, _ = cv2.findContours(morph, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+# Vẽ hình chữ nhật bao quanh mỗi chữ số
+for contour in contours:
+    x, y, w, h = cv2.boundingRect(contour)
+    if 10 < w < 200 and 10 < h < 200:
+      cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+# Lưu kết quả đầu ra
+cv2.imwrite("521h0435_img_02_01.jpg", img)
